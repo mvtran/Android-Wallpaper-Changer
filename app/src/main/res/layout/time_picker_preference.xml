@@ -7,15 +7,17 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="@string/time_to_change"
-        android:layout_gravity="left"/>
+        android:text="@string/changing_time_label"
+        android:layout_gravity="start"/>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:id="@+id/schedule_time"
+        android:layout_marginRight="20dp"
+        android:layout_marginEnd="20dp"
         android:textSize="35sp"
-        android:layout_gravity="right" />
+        android:layout_gravity="end" />
 
 </LinearLayout>

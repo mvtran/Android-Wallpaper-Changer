@@ -17,5 +17,4 @@
         android:id="@+id/settingsText"
         android:layout_gravity="center_horizontal|bottom" />
 
-
 </FrameLayout>

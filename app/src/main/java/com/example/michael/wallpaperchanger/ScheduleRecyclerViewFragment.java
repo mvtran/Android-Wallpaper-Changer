@@ -1,7 +1,13 @@
 package com.example.michael.wallpaperchanger;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -9,28 +15,22 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link ScheduleRecyclerViewFragment.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link ScheduleRecyclerViewFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class ScheduleRecyclerViewFragment extends Fragment {
 
     private static final String TAG = "From Fragment";
+    public static final int PICK_IMAGE = 1; // request code for image chooser
 
-    private RecyclerView recyclerView;
-    private RecyclerView.Adapter adapter;
-    private RecyclerView.LayoutManager layoutManager;
+    private RecyclerView                    recyclerView;
+    private RecyclerView.Adapter            adapter;
+    private RecyclerView.LayoutManager      layoutManager;
+    private OnFragmentInteractionListener   mListener;
+    public  FloatingActionButton            fab;
 
-    private OnFragmentInteractionListener mListener;
-
-    // Required empty public constructor
     public ScheduleRecyclerViewFragment() {
+        // Required empty public constructor
     }
 
     /**
@@ -61,8 +61,8 @@ public class ScheduleRecyclerViewFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        Log.d(TAG, "inside onCreateView");
         View rootView = inflater.inflate(R.layout.fragment_schedule_recycler_view, container, false);
+        loadFab();
 
         recyclerView = (RecyclerView) rootView.findViewById(R.id.schedules_recycler_view);
         recyclerView.setHasFixedSize(true); // Set this to improve performance
@@ -71,21 +71,20 @@ public class ScheduleRecyclerViewFragment extends Fragment {
         recyclerView.setLayoutManager(layoutManager);
 
         ItemData itemsData[] = {
-                new ItemData("a house", R.drawable.house),
-                new ItemData("a person", R.drawable.person),
-                new ItemData("WHOA", R.drawable.the_s)
+                new ItemData("4:20 am", R.drawable.house),
+                new ItemData("6:00 pm", R.drawable.person),
+                new ItemData("5:55 pm", R.drawable.the_s)
         };
 
-        adapter = new WallpaperScheduleAdapter(itemsData);
+        WallpaperScheduleAdapter.OnItemClickListener listener = new WallpaperScheduleAdapter.OnItemClickListener() {
+            @Override
+            public void onClick(ItemData item) {
+                ((MainActivity)getActivity()).onScheduleClicked(item.getText(), item.getImageURL());
+            }
+        };
+        adapter = new WallpaperScheduleAdapter(itemsData, listener);
         recyclerView.setAdapter(adapter);
         return rootView;
-    }
-
-    // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(int position) {
-        if (mListener != null) {
-            mListener.onScheduleClicked(position);
-        }
     }
 
     @Override
@@ -105,6 +104,12 @@ public class ScheduleRecyclerViewFragment extends Fragment {
         mListener = null;
     }
 
+    private void loadFab() {
+        if (fab == null)
+            fab = (FloatingActionButton)getActivity().findViewById(R.id.fab);
+        fab.show();
+    }
+
     /**
      * This interface must be implemented by activities that contain this
      * fragment to allow an interaction in this fragment to be communicated
@@ -116,7 +121,6 @@ public class ScheduleRecyclerViewFragment extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
-        void onScheduleClicked(int position);
+        void onScheduleClicked(String time, int imageURL);
     }
 }

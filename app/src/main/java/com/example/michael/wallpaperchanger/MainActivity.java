@@ -1,42 +1,35 @@
 package com.example.michael.wallpaperchanger;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.app.WallpaperManager;
-import android.content.BroadcastReceiver;
-import android.content.Context;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.DefaultItemAnimator;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.IOException;
+public class MainActivity extends AppCompatActivity implements ScheduleRecyclerViewFragment.OnFragmentInteractionListener,
+                                                                ScheduleDetailsFragment.OnFragmentInteractionListener {
 
-public class MainActivity extends AppCompatActivity implements ScheduleRecyclerViewFragment.OnFragmentInteractionListener {
-
-    private static final String TAG = "WALLPAPERCHANGER";
+    private static final String TAG = "MainActivity";
+    FloatingActionButton fab = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setupActivityLayout();
+        //TODO: the params passed here will probably be data on the complete schedule of wallpapers. gotta find somewhere to store persistent data...
         ScheduleRecyclerViewFragment fragment = ScheduleRecyclerViewFragment.newInstance("some param", "some other param");
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
@@ -51,28 +44,58 @@ public class MainActivity extends AppCompatActivity implements ScheduleRecyclerV
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         Boolean shmuck = sp.getBoolean("pref_shmuck", true);
         TextView tv = (TextView) findViewById(R.id.settingsText);
-        tv.setText("Shmuck: " + shmuck);
-    }
-
-    public void addWallpaperSchedule(View view) {
-        Intent intent = new Intent(this, AddWallpaperScheduleActivity.class);
-        startActivity(intent);
+        if (tv != null)
+            tv.setText("Shmuck: " + shmuck);
     }
 
     public void setupActivityLayout() {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                addWallpaperSchedule(view);
-            }
-        });
+        fab = (FloatingActionButton)findViewById(R.id.fab);
+        if (fab != null)
+            fab.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    openScheduleDetails(Utility.get24HourTime(), R.drawable.placeholder_wallpaper_full);
+                }
+            });
     }
 
-    public void onScheduleClicked(int position) {
-        Log.d(TAG, "inside onScheduleClicked in MainActivity");
+    public void onScheduleClicked(String time, int imageURL) {
+        openScheduleDetails(time, imageURL);
+        //Toast.makeText(this, "Text: " + time, Toast.LENGTH_SHORT).show();
+    }
+
+    public void onFragmentClicked() {
+        // TODO: what do?!
+    }
+
+    public void openScheduleDetails(String time, int imageURL) {
+        ScheduleDetailsFragment fragment = ScheduleDetailsFragment.newInstance(time, imageURL);
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.main_container, fragment)
+                .addToBackStack(null)
+                .commit();
+        fab.setVisibility(View.GONE);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        // TODO: request code: big number, result code: -1. uh oh.
+        if (requestCode == ScheduleRecyclerViewFragment.PICK_IMAGE && resultCode == Activity.RESULT_OK) {
+            if (data == null) {
+                Toast.makeText(this, "ya done fucked up A-A-ron", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "preezent", Toast.LENGTH_SHORT).show();
+                // get ScheduleDetailsFragment so you can add image?
+                Uri selectedImage = data.getData();
+                String fileString = selectedImage.getPath();
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                Bitmap thumbnail = BitmapFactory.decodeFile(fileString, options);
+                // TODO: pass this to main activity so ScheduleDetailsFragment can access it?
+            }
+        }
     }
 
     @Override

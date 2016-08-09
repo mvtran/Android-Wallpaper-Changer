@@ -5,9 +5,9 @@ import android.os.Build;
 import android.widget.TimePicker;
 
 /*
-    This class is the same as the normal TimePicker except it handles
-     the whole deprecated method situation. It helps with refactoring/
-     maintenance to keep it in this place. Therefore, only use MyTimePicker
+    This class is the same as the normal TimePicker except it simplifies
+     dealing with deprecated methods. It helps with refactoring/
+     maintenance to keep it all in this place. Therefore, use MyTimePicker
      rather than TimePicker at all times.
 
      Suggestion found at http://stackoverflow.com/questions/33393137/button-settextappearance-is-deprecated
