@@ -1,5 +1,7 @@
 package com.example.michael.wallpaperchanger;
 
+import android.widget.Toast;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -12,8 +14,31 @@ public final class Utility {
         return new SimpleDateFormat("HH:mm", Locale.US).format(new Date());
     }
 
-    public static String getTime() {
+    public static String get12HourTime() {
         DateFormat df = DateFormat.getTimeInstance(DateFormat.SHORT);
         return df.format(new Date());
+    }
+
+    public static String to12HourTime(String time) {
+        String[] hourAndMin = time.split(":");
+        int hour = Integer.parseInt(hourAndMin[0]),
+            min  = Integer.parseInt(hourAndMin[1]);
+        String amOrPm = "AM", minStr = ""+min;
+
+        if (hour > 11) {
+            if (hour > 12)
+                hour -= 12;
+            amOrPm = "PM";
+        }
+        if (hour == 0)
+            hour = 12;
+        if (min < 10)
+            minStr = "" + 0 + min;
+
+        return "" + hour + ":" + minStr + " " + amOrPm;
+    }
+
+    public static String to24HourTime(String time) {
+        return time;
     }
 }

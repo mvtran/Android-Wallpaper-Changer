@@ -33,7 +33,7 @@ public class WallpaperScheduleAdapter extends RecyclerView.Adapter<WallpaperSche
         return new ViewHolder(itemLayoutView);
     }
 
-    // Called when actually changing the contents inside the ViewHolder
+    // Called when actually filling in the contents inside the ViewHolder
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, int pos) {
         viewHolder.bind(items[pos], listener);

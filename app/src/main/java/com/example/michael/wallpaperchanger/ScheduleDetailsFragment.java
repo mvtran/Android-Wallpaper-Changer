@@ -1,10 +1,15 @@
 package com.example.michael.wallpaperchanger;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -21,6 +26,7 @@ public class ScheduleDetailsFragment extends Fragment {
     // the fragment initialization parameters
     public static final String ARG_CHANGING_TIME = "com.example.michael.wallpaperchanger.changingTime";
     public static final String ARG_WALLPAPER = "com.example.michael.wallpaperchanger.currentWallpaper";
+    public static final int PICK_IMAGE = 1; // request code for image chooser
 
     private ImageView wallpaperImageView = null;
     private TextView timeTv;
@@ -34,11 +40,11 @@ public class ScheduleDetailsFragment extends Fragment {
         // Required empty public constructor
     }
 
-    public static ScheduleDetailsFragment newInstance(String time, int imageURL) {
+    public static ScheduleDetailsFragment newInstance(String time, int imageUrl) {
         ScheduleDetailsFragment fragment = new ScheduleDetailsFragment();
         Bundle args = new Bundle();
         args.putString(ARG_CHANGING_TIME, time);
-        args.putInt(ARG_WALLPAPER, imageURL);
+        args.putInt(ARG_WALLPAPER, imageUrl);
         fragment.setArguments(args);
         return fragment;
     }
@@ -49,48 +55,56 @@ public class ScheduleDetailsFragment extends Fragment {
         if (getArguments() != null) {
             changingTime = getArguments().getString(ARG_CHANGING_TIME);
             currentWallpaperId = getArguments().getInt(ARG_WALLPAPER);
+            // TODO: can't just use resid for images. use image path (string) instead?
         }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        changingTime = getArguments().getString(ARG_CHANGING_TIME);
-        currentWallpaperId = getArguments().getInt(ARG_WALLPAPER);
-
+        // Inflate the root view then get references to the needed views
         View root = inflater.inflate(R.layout.fragment_schedule_details, container, false);
         wallpaperImageView = (ImageView)root.findViewById(R.id.wallpaper_preview);
         timeTv = (TextView)root.findViewById(R.id.changing_time);
+        Button confirmButton = (Button)root.findViewById(R.id.confirm_button);
 
-        timeTv.setText(changingTime);
-        loadImage(currentWallpaperId);
+        // Fill in the Text/Image views
+        getAndSetScheduleDetails(root);
 
+        // Set listeners
         wallpaperImageView.setOnClickListener(new ImageView.OnClickListener() {
             @Override
             public void onClick(View v) {
                 chooseImage();
             }
         });
-
-        Button confirmButton = (Button)root.findViewById(R.id.confirm_button);
+        timeTv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pickTime();
+            }
+        });
         confirmButton.setOnClickListener(new Button.OnClickListener() {
             @Override
             public void onClick(View v) {
                 confirmSettings();
             }
         });
+
         return root;
     }
 
-    public void confirmSettings() {
-        Toast.makeText(getContext(), "To be implemented!", Toast.LENGTH_SHORT).show();
-    }
-
-    public void chooseImage() {
-        Intent intent = new Intent();
-        intent.setType("image/*");
-        intent.setAction(Intent.ACTION_GET_CONTENT);
-        startActivityForResult(Intent.createChooser(intent, "Select Picture"), ScheduleRecyclerViewFragment.PICK_IMAGE);
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_IMAGE && resultCode == Activity.RESULT_OK) {
+            if (data == null) {
+                Toast.makeText(getContext(), "ya done fucked up A-A-ron (data is null)", Toast.LENGTH_SHORT).show();
+            } else {
+                Uri selectedImage = data.getData();
+                loadImage(selectedImage);
+            }
+        }
     }
 
     @Override
@@ -110,10 +124,52 @@ public class ScheduleDetailsFragment extends Fragment {
         mListener = null;
     }
 
-    public void loadImage(int imageURL) {
+    public void getAndSetScheduleDetails(View root) {
+        changingTime = getArguments().getString(ARG_CHANGING_TIME);
+        currentWallpaperId = getArguments().getInt(ARG_WALLPAPER);
+        setTime(changingTime);
+        loadImage(currentWallpaperId);
+    }
+
+    public void confirmSettings() {
+        SharedPreferences prefs = getActivity().getSharedPreferences(MainActivity.ALARM_PREFS, 0);
+        SharedPreferences.Editor editor = prefs.edit();
+        String key = "schedule-"+changingTime;
+        editor.putString(key, changingTime);
+        editor.apply();
+        Toast.makeText(getContext(), "Saved!", Toast.LENGTH_SHORT).show();
+    }
+
+    public void pickTime() {
+        DialogFragment fragment = new TimePickerFragment();
+        fragment.show(getActivity().getSupportFragmentManager(), "timePicker");
+    }
+
+    public void chooseImage() {
+        Intent intent = new Intent();
+        intent.setType("image/*");
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE);
+    }
+
+    public void setTime(String time) {
+        changingTime = time;
+        if (timeTv != null)
+            timeTv.setText(time);
+    }
+
+    public void loadImage(Uri imageUri) {
         if (wallpaperImageView != null)
             Picasso.with(getContext())
-                    .load(imageURL)
+                    .load(imageUri)
+                    .resize(500,500)
+                    .into(wallpaperImageView);
+    }
+
+    public void loadImage(int imageId) {
+        if (wallpaperImageView != null)
+            Picasso.with(getContext())
+                    .load(imageId)
                     .resize(500,500)
                     .into(wallpaperImageView);
     }

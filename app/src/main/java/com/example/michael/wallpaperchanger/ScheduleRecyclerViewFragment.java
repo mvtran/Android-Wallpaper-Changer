@@ -21,7 +21,6 @@ import android.widget.Toast;
 public class ScheduleRecyclerViewFragment extends Fragment {
 
     private static final String TAG = "From Fragment";
-    public static final int PICK_IMAGE = 1; // request code for image chooser
 
     private RecyclerView                    recyclerView;
     private RecyclerView.Adapter            adapter;
@@ -71,9 +70,9 @@ public class ScheduleRecyclerViewFragment extends Fragment {
         recyclerView.setLayoutManager(layoutManager);
 
         ItemData itemsData[] = {
-                new ItemData("4:20 am", R.drawable.house),
-                new ItemData("6:00 pm", R.drawable.person),
-                new ItemData("5:55 pm", R.drawable.the_s)
+                new ItemData("4:20 AM", R.drawable.house),
+                new ItemData("6:00 PM", R.drawable.person),
+                new ItemData("5:55 PM", R.drawable.the_s)
         };
 
         WallpaperScheduleAdapter.OnItemClickListener listener = new WallpaperScheduleAdapter.OnItemClickListener() {

@@ -18,10 +18,16 @@ import android.view.MenuItem;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.Iterator;
+import java.util.Map;
+
+// TODO: create preference to show 24 hour time or am/pm time. after all, the Utility class is made for both.
+
 public class MainActivity extends AppCompatActivity implements ScheduleRecyclerViewFragment.OnFragmentInteractionListener,
                                                                 ScheduleDetailsFragment.OnFragmentInteractionListener {
 
     private static final String TAG = "MainActivity";
+    public static final String ALARM_PREFS = "com.example.michael.wallpaperchanger.alarmPrefs";
     FloatingActionButton fab = null;
 
     @Override
@@ -41,60 +47,23 @@ public class MainActivity extends AppCompatActivity implements ScheduleRecyclerV
     @Override
     protected void onStart() {
         super.onStart();
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        /*SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         Boolean shmuck = sp.getBoolean("pref_shmuck", true);
         TextView tv = (TextView) findViewById(R.id.settingsText);
         if (tv != null)
-            tv.setText("Shmuck: " + shmuck);
-    }
-
-    public void setupActivityLayout() {
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        fab = (FloatingActionButton)findViewById(R.id.fab);
-        if (fab != null)
-            fab.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    openScheduleDetails(Utility.get24HourTime(), R.drawable.placeholder_wallpaper_full);
-                }
-            });
-    }
-
-    public void onScheduleClicked(String time, int imageURL) {
-        openScheduleDetails(time, imageURL);
-        //Toast.makeText(this, "Text: " + time, Toast.LENGTH_SHORT).show();
-    }
-
-    public void onFragmentClicked() {
-        // TODO: what do?!
-    }
-
-    public void openScheduleDetails(String time, int imageURL) {
-        ScheduleDetailsFragment fragment = ScheduleDetailsFragment.newInstance(time, imageURL);
-        getSupportFragmentManager()
-                .beginTransaction()
-                .replace(R.id.main_container, fragment)
-                .addToBackStack(null)
-                .commit();
-        fab.setVisibility(View.GONE);
+            tv.setText("Shmuck: " + shmuck);*/
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        // TODO: request code: big number, result code: -1. uh oh.
-        if (requestCode == ScheduleRecyclerViewFragment.PICK_IMAGE && resultCode == Activity.RESULT_OK) {
-            if (data == null) {
-                Toast.makeText(this, "ya done fucked up A-A-ron", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "preezent", Toast.LENGTH_SHORT).show();
-                // get ScheduleDetailsFragment so you can add image?
-                Uri selectedImage = data.getData();
-                String fileString = selectedImage.getPath();
-                BitmapFactory.Options options = new BitmapFactory.Options();
-                Bitmap thumbnail = BitmapFactory.decodeFile(fileString, options);
-                // TODO: pass this to main activity so ScheduleDetailsFragment can access it?
-            }
+    protected void onResume() {
+        super.onResume();
+        SharedPreferences prefs = getSharedPreferences(ALARM_PREFS, 0);
+        Map<String,?> all = prefs.getAll();
+        Iterator it = all.entrySet().iterator();
+        while(it.hasNext()) {
+            Map.Entry pair = (Map.Entry)it.next();
+            Log.d(TAG, pair.getKey() + ", " + pair.getValue());
+            it.remove();
         }
     }
 
@@ -118,5 +87,43 @@ public class MainActivity extends AppCompatActivity implements ScheduleRecyclerV
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public void setupActivityLayout() {
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        fab = (FloatingActionButton)findViewById(R.id.fab);
+        if (fab != null)
+            fab.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    openScheduleDetails(Utility.get12HourTime(), R.drawable.placeholder_wallpaper_full);
+                }
+            });
+    }
+
+    public void onScheduleClicked(String time, int imageURL) {
+        openScheduleDetails(time, imageURL);
+        //Toast.makeText(this, "Text: " + time, Toast.LENGTH_SHORT).show();
+    }
+
+    public void onFragmentClicked() {
+        Toast.makeText(this, "onFragmentClicked()", Toast.LENGTH_SHORT).show();
+    }
+
+    public void openScheduleDetails(String time, int imageURL) {
+        ScheduleDetailsFragment fragment = ScheduleDetailsFragment.newInstance(time, imageURL);
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.main_container, fragment)
+                .addToBackStack(null)
+                .commit();
+        fab.setVisibility(View.GONE);
+    }
+
+    public void setTime(String pickerTime, boolean in24HourFormat) {
+        ScheduleDetailsFragment fragment = (ScheduleDetailsFragment)getSupportFragmentManager().
+                                            findFragmentById(R.id.main_container);
+        fragment.setTime(Utility.to12HourTime(pickerTime));
     }
 }

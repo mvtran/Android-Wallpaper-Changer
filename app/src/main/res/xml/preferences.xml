@@ -5,9 +5,5 @@
         android:title="Are you a shmuck?"
         android:summary="So, are you a shmuck?"
         android:defaultValue="true" />
-    <com.example.michael.wallpaperchanger.TimePickerPreference
-        android:key="@string/pref_time_picker_key"
-        android:title="@string/pref_time_picker_title"
-        android:defaultValue="@string/pref_time_picker_default_value" />
 
 </PreferenceScreen>
