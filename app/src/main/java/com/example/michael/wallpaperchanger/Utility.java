@@ -1,5 +1,7 @@
 package com.example.michael.wallpaperchanger;
 
+import android.content.res.Resources;
+import android.net.Uri;
 import android.widget.Toast;
 
 import java.text.DateFormat;
@@ -40,5 +42,13 @@ public final class Utility {
 
     public static String to24HourTime(String time) {
         return time;
+    }
+
+    /*
+     * @param imageIdString: A string representing an Android drawable resource, e.g. R.drawable.picture
+     */
+    public static Uri idToUri(String imageIdString) {
+        String fileName = imageIdString.split("\\.")[2];
+        return Uri.parse("android.resource://com.example.michael.wallpaperchanger/drawable/"+fileName);
     }
 }

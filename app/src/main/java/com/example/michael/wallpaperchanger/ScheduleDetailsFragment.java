@@ -32,7 +32,9 @@ public class ScheduleDetailsFragment extends Fragment {
     private TextView timeTv;
 
     private String changingTime;
-    private int currentWallpaperId = R.drawable.placeholder_wallpaper_full;
+    private Uri wallpaperImage;
+
+    static final String TAG = "ScheduleDetails";
 
     private OnFragmentInteractionListener mListener;
 
@@ -40,11 +42,11 @@ public class ScheduleDetailsFragment extends Fragment {
         // Required empty public constructor
     }
 
-    public static ScheduleDetailsFragment newInstance(String time, int imageUrl) {
+    public static ScheduleDetailsFragment newInstance(String time, String imageUriString) {
         ScheduleDetailsFragment fragment = new ScheduleDetailsFragment();
         Bundle args = new Bundle();
         args.putString(ARG_CHANGING_TIME, time);
-        args.putInt(ARG_WALLPAPER, imageUrl);
+        args.putString(ARG_WALLPAPER, imageUriString);
         fragment.setArguments(args);
         return fragment;
     }
@@ -54,8 +56,7 @@ public class ScheduleDetailsFragment extends Fragment {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             changingTime = getArguments().getString(ARG_CHANGING_TIME);
-            currentWallpaperId = getArguments().getInt(ARG_WALLPAPER);
-            // TODO: can't just use resid for images. use image path (string) instead?
+            wallpaperImage = Uri.parse(getArguments().getString(ARG_WALLPAPER));
         }
     }
 
@@ -67,6 +68,7 @@ public class ScheduleDetailsFragment extends Fragment {
         wallpaperImageView = (ImageView)root.findViewById(R.id.wallpaper_preview);
         timeTv = (TextView)root.findViewById(R.id.changing_time);
         Button confirmButton = (Button)root.findViewById(R.id.confirm_button);
+        Button cropButton = (Button)root.findViewById(R.id.crop_button);
 
         // Fill in the Text/Image views
         getAndSetScheduleDetails(root);
@@ -90,6 +92,12 @@ public class ScheduleDetailsFragment extends Fragment {
                 confirmSettings();
             }
         });
+        cropButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                crop();
+            }
+        });
 
         return root;
     }
@@ -101,7 +109,9 @@ public class ScheduleDetailsFragment extends Fragment {
             if (data == null) {
                 Toast.makeText(getContext(), "ya done fucked up A-A-ron (data is null)", Toast.LENGTH_SHORT).show();
             } else {
+                // TODO: what happens if you move the image's location?
                 Uri selectedImage = data.getData();
+                wallpaperImage = selectedImage;
                 loadImage(selectedImage);
             }
         }
@@ -126,18 +136,31 @@ public class ScheduleDetailsFragment extends Fragment {
 
     public void getAndSetScheduleDetails(View root) {
         changingTime = getArguments().getString(ARG_CHANGING_TIME);
-        currentWallpaperId = getArguments().getInt(ARG_WALLPAPER);
+        wallpaperImage = Uri.parse(getArguments().getString(ARG_WALLPAPER));
         setTime(changingTime);
-        loadImage(currentWallpaperId);
+        loadImage(wallpaperImage);
+    }
+
+    public void returnToScheduleList() {
+        MainActivity activity = (MainActivity)getActivity();
+        activity.showScheduleList();
     }
 
     public void confirmSettings() {
         SharedPreferences prefs = getActivity().getSharedPreferences(MainActivity.ALARM_PREFS, 0);
         SharedPreferences.Editor editor = prefs.edit();
+
+        // TODO: check for duplicates while ignoring 12hour/24hour format
         String key = "schedule-"+changingTime;
-        editor.putString(key, changingTime);
-        editor.apply();
-        Toast.makeText(getContext(), "Saved!", Toast.LENGTH_SHORT).show();
+        if (prefs.contains(key)) {
+            Toast.makeText(getContext(), "Schedule for " + changingTime + " already exists", Toast.LENGTH_SHORT).show();
+        } else {
+            String imageUriString = wallpaperImage.toString();
+            editor.putString(key, imageUriString);
+            editor.apply();
+            returnToScheduleList();
+            Toast.makeText(getContext(), "Saved schedule for " + changingTime, Toast.LENGTH_SHORT).show();
+        }
     }
 
     public void pickTime() {
@@ -158,10 +181,15 @@ public class ScheduleDetailsFragment extends Fragment {
             timeTv.setText(time);
     }
 
+    public void crop() {
+        Toast.makeText(getContext(), "To be implemented!", Toast.LENGTH_SHORT).show();
+    }
+
     public void loadImage(Uri imageUri) {
         if (wallpaperImageView != null)
             Picasso.with(getContext())
                     .load(imageUri)
+                    .error(R.drawable.error)
                     .resize(500,500)
                     .into(wallpaperImageView);
     }
@@ -170,6 +198,7 @@ public class ScheduleDetailsFragment extends Fragment {
         if (wallpaperImageView != null)
             Picasso.with(getContext())
                     .load(imageId)
+                    .error(R.drawable.error)
                     .resize(500,500)
                     .into(wallpaperImageView);
     }

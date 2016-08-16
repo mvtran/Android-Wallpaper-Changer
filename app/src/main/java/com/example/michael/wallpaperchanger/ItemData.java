@@ -1,12 +1,29 @@
 package com.example.michael.wallpaperchanger;
 
+import android.net.Uri;
+import android.util.Log;
+
+/*
+ * A class that represents a schedule.
+ */
 public class ItemData {
     private String text;
-    private int imageURL;
+    private int imageId; // android resource id, e.g. R.drawable.picture
+    private Uri imageUri;
 
-    public ItemData(String text, int imageURL) {
+    public ItemData(String text, int imageId) {
         this.text = text;
-        this.imageURL = imageURL;
+        this.imageId = imageId;
+    }
+
+    public ItemData(String text, Uri imageUri) {
+        this.text = text;
+        this.imageUri = imageUri;
+    }
+
+    public ItemData(String text, String imageUriString) {
+        this.text = text;
+        this.imageUri = Uri.parse(imageUriString);
     }
 
     public String getText() {
@@ -17,11 +34,19 @@ public class ItemData {
         this.text = text;
     }
 
-    public int getImageURL() {
-        return imageURL;
+    public int getImageId() {
+        return imageId;
     }
 
-    public void setImageURL(int imageURL) {
-        this.imageURL = imageURL;
+    public void setImageId(int imageId) {
+        this.imageId = imageId;
+    }
+
+    public Uri getImageUri() {
+        return imageUri;
+    }
+
+    public void setImageUri(Uri imageUri) {
+        this.imageUri = imageUri;
     }
 }

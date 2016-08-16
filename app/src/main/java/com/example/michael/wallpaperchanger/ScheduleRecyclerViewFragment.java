@@ -3,6 +3,7 @@ package com.example.michael.wallpaperchanger;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -15,7 +16,12 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Map;
 
 
 public class ScheduleRecyclerViewFragment extends Fragment {
@@ -69,19 +75,17 @@ public class ScheduleRecyclerViewFragment extends Fragment {
         layoutManager = new LinearLayoutManager(getActivity());
         recyclerView.setLayoutManager(layoutManager);
 
-        ItemData itemsData[] = {
-                new ItemData("4:20 AM", R.drawable.house),
-                new ItemData("6:00 PM", R.drawable.person),
-                new ItemData("5:55 PM", R.drawable.the_s)
-        };
+        ArrayList<ItemData> scheduleList = new ArrayList<>();
+        populateScheduleList(scheduleList);
 
         WallpaperScheduleAdapter.OnItemClickListener listener = new WallpaperScheduleAdapter.OnItemClickListener() {
             @Override
             public void onClick(ItemData item) {
-                ((MainActivity)getActivity()).onScheduleClicked(item.getText(), item.getImageURL());
+                // Passes these arguments to ScheduleDetailsFragment.newInstance(String time, String imageUriString)
+                ((MainActivity)getActivity()).onScheduleClicked(item.getText(), item.getImageUri());
             }
         };
-        adapter = new WallpaperScheduleAdapter(itemsData, listener);
+        adapter = new WallpaperScheduleAdapter(scheduleList, listener);
         recyclerView.setAdapter(adapter);
         return rootView;
     }
@@ -103,10 +107,35 @@ public class ScheduleRecyclerViewFragment extends Fragment {
         mListener = null;
     }
 
+    // TODO: sort by time
+    private void populateScheduleList(ArrayList<ItemData> items) {
+        SharedPreferences prefs = getActivity().getSharedPreferences(MainActivity.ALARM_PREFS, 0);
+        Map<String,?> all = prefs.getAll();
+        Iterator it = all.entrySet().iterator();
+
+        while(it.hasNext()) {
+            Map.Entry pair = (Map.Entry)it.next();
+
+            /*
+                Key = schedule time as string in the format "schedule-X:XX [AM|PM]". this is where
+                      we get the time
+                Value = string representation of uri for image
+            */
+            String[] key = ((String)pair.getKey()).split("-");
+            String time = key[1];
+            Uri image = Uri.parse((String)pair.getValue());
+
+            items.add(new ItemData(time, image));
+            it.remove();
+        }
+    }
+
     private void loadFab() {
         if (fab == null)
             fab = (FloatingActionButton)getActivity().findViewById(R.id.fab);
         fab.show();
+        Button clear = (Button)getActivity().findViewById(R.id.temp_clear_button);
+        clear.setVisibility(View.VISIBLE);
     }
 
     /**
@@ -120,6 +149,6 @@ public class ScheduleRecyclerViewFragment extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener {
-        void onScheduleClicked(String time, int imageURL);
+        void onScheduleClicked(String time, Uri imageUri);
     }
 }

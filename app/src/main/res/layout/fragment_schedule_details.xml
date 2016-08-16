@@ -60,6 +60,18 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="32dp"
-        android:layout_gravity="center_horizontal|bottom" />
+        android:layout_marginRight="86dp"
+        android:layout_marginEnd="86dp"
+        android:layout_gravity="center_horizontal|bottom|end" />
+
+    <Button
+        android:id="@+id/crop_button"
+        android:text="@string/crop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="32dp"
+        android:layout_marginLeft="86dp"
+        android:layout_marginStart="86dp"
+        android:layout_gravity="center_horizontal|start|bottom" />
 
 </FrameLayout>

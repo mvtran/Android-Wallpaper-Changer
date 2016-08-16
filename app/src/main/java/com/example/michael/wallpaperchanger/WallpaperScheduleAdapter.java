@@ -9,15 +9,17 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
+import java.util.ArrayList;
+
 public class WallpaperScheduleAdapter extends RecyclerView.Adapter<WallpaperScheduleAdapter.ViewHolder> {
 
     public interface OnItemClickListener {void onClick(ItemData item);}
 
-    private ItemData[] items;
+    private ArrayList<ItemData> items;
     private OnItemClickListener listener;
 
     // Constructor that takes as arguments the data that will be displayed as well as the listener
-    public WallpaperScheduleAdapter(ItemData[] items, OnItemClickListener listener) {
+    public WallpaperScheduleAdapter(ArrayList<ItemData> items, OnItemClickListener listener) {
         this.items = items;
         this.listener = listener;
     }
@@ -36,13 +38,13 @@ public class WallpaperScheduleAdapter extends RecyclerView.Adapter<WallpaperSche
     // Called when actually filling in the contents inside the ViewHolder
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, int pos) {
-        viewHolder.bind(items[pos], listener);
+        viewHolder.bind(items.get(pos), listener);
     }
 
     // Return size of itemsData (invoked by layoutmanager)
     @Override
     public int getItemCount() {
-        return items.length;
+        return items.size();
     }
 
     // The ViewHolder caches the Views we get from findViewById for each row's Views
@@ -60,7 +62,11 @@ public class WallpaperScheduleAdapter extends RecyclerView.Adapter<WallpaperSche
         // Get data from items[pos], then replace contents of the View with that ItemData
         public void bind(final ItemData item, final OnItemClickListener listener) {
             text.setText(item.getText());
-            Picasso.with(itemView.getContext()).load(item.getImageURL()).into(icon);
+            Picasso.with(itemView.getContext())
+                    .load(item.getImageUri())
+                    .error(R.drawable.error)
+                    .resize(50,50)
+                    .into(icon);
 
             // Set the onClick method of this view to be the onClick method implemented in
             // ScheduleRecyclerViewFragment.java when setting the adapter.

@@ -15,6 +15,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,18 +31,14 @@ public class MainActivity extends AppCompatActivity implements ScheduleRecyclerV
     public static final String ALARM_PREFS = "com.example.michael.wallpaperchanger.alarmPrefs";
     FloatingActionButton fab = null;
 
+    Button clear = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setupActivityLayout();
-        //TODO: the params passed here will probably be data on the complete schedule of wallpapers. gotta find somewhere to store persistent data...
-        ScheduleRecyclerViewFragment fragment = ScheduleRecyclerViewFragment.newInstance("some param", "some other param");
-        if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
-                    .add(R.id.main_container, fragment)
-                    .commit();
-        }
+        showScheduleList();
     }
 
     @Override
@@ -52,19 +49,6 @@ public class MainActivity extends AppCompatActivity implements ScheduleRecyclerV
         TextView tv = (TextView) findViewById(R.id.settingsText);
         if (tv != null)
             tv.setText("Shmuck: " + shmuck);*/
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        SharedPreferences prefs = getSharedPreferences(ALARM_PREFS, 0);
-        Map<String,?> all = prefs.getAll();
-        Iterator it = all.entrySet().iterator();
-        while(it.hasNext()) {
-            Map.Entry pair = (Map.Entry)it.next();
-            Log.d(TAG, pair.getKey() + ", " + pair.getValue());
-            it.remove();
-        }
     }
 
     @Override
@@ -89,36 +73,64 @@ public class MainActivity extends AppCompatActivity implements ScheduleRecyclerV
         return super.onOptionsItemSelected(item);
     }
 
+    public void showScheduleList() {
+        ScheduleRecyclerViewFragment fragment = ScheduleRecyclerViewFragment.newInstance("some param", "some other param");
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.main_container, fragment)
+                .commit();
+    }
+
     public void setupActivityLayout() {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         fab = (FloatingActionButton)findViewById(R.id.fab);
+        clear = (Button)findViewById(R.id.temp_clear_button);
+
+        if (clear != null)
+            clear.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    clearList();
+                }
+            });
+
         if (fab != null)
             fab.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    openScheduleDetails(Utility.get12HourTime(), R.drawable.placeholder_wallpaper_full);
+                    Uri placeholderImageUri = Utility.idToUri("R.drawable.placeholder_wallpaper_full");
+                    openScheduleDetails(Utility.get12HourTime(), placeholderImageUri);
                 }
             });
     }
 
-    public void onScheduleClicked(String time, int imageURL) {
-        openScheduleDetails(time, imageURL);
-        //Toast.makeText(this, "Text: " + time, Toast.LENGTH_SHORT).show();
+    public void clearList() {
+        SharedPreferences prefs = getSharedPreferences(ALARM_PREFS, 0);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.clear();
+        editor.apply();
+        showScheduleList();
+        Toast.makeText(this, "Schedules cleared", Toast.LENGTH_SHORT).show();
+    }
+
+    public void onScheduleClicked(String time, Uri imageUri) {
+        openScheduleDetails(time, imageUri);
     }
 
     public void onFragmentClicked() {
         Toast.makeText(this, "onFragmentClicked()", Toast.LENGTH_SHORT).show();
     }
 
-    public void openScheduleDetails(String time, int imageURL) {
-        ScheduleDetailsFragment fragment = ScheduleDetailsFragment.newInstance(time, imageURL);
+    public void openScheduleDetails(String time, Uri imageUri) {
+        ScheduleDetailsFragment fragment = ScheduleDetailsFragment.newInstance(time, imageUri.toString());
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.main_container, fragment)
                 .addToBackStack(null)
                 .commit();
         fab.setVisibility(View.GONE);
+        clear.setVisibility(View.GONE);
     }
 
     public void setTime(String pickerTime, boolean in24HourFormat) {
