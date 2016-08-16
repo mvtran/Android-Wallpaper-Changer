@@ -134,6 +134,7 @@ public class ScheduleRecyclerViewFragment extends Fragment {
         if (fab == null)
             fab = (FloatingActionButton)getActivity().findViewById(R.id.fab);
         fab.show();
+        // Temporary
         Button clear = (Button)getActivity().findViewById(R.id.temp_clear_button);
         clear.setVisibility(View.VISIBLE);
     }
