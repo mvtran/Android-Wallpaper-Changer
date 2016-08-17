@@ -1,17 +1,17 @@
 package com.example.michael.wallpaperchanger;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,22 +19,25 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.support.v4.content.ContextCompat;
 
 import com.squareup.picasso.Picasso;
 
 public class ScheduleDetailsFragment extends Fragment {
     // the fragment initialization parameters
-    public static final String ARG_CHANGING_TIME = "com.example.michael.wallpaperchanger.changingTime";
-    public static final String ARG_WALLPAPER = "com.example.michael.wallpaperchanger.currentWallpaper";
-    public static final int PICK_IMAGE = 1; // request code for image chooser
+    static final String ARG_CHANGING_TIME = "com.example.michael.wallpaperchanger.changingTime";
+    static final String ARG_WALLPAPER = "com.example.michael.wallpaperchanger.currentWallpaper";
+
+    // request codes
+    static final int PICK_IMAGE = 1;
+    static final int PERMISSIONS_CODE = 2;
+
+    static final String TAG = "ScheduleDetails";
 
     private ImageView wallpaperImageView = null;
     private TextView timeTv;
-
     private String changingTime;
     private Uri wallpaperImage;
-
-    static final String TAG = "ScheduleDetails";
 
     private OnFragmentInteractionListener mListener;
 
@@ -57,6 +60,9 @@ public class ScheduleDetailsFragment extends Fragment {
         if (getArguments() != null) {
             changingTime = getArguments().getString(ARG_CHANGING_TIME);
             wallpaperImage = Uri.parse(getArguments().getString(ARG_WALLPAPER));
+        } else {
+            returnToScheduleList();
+            Toast.makeText(getContext(), "Something went wrong", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -71,7 +77,8 @@ public class ScheduleDetailsFragment extends Fragment {
         Button cropButton = (Button)root.findViewById(R.id.crop_button);
 
         // Fill in the Text/Image views
-        getAndSetScheduleDetails(root);
+        setTime(changingTime);
+        loadImage(wallpaperImage);
 
         // Set listeners
         wallpaperImageView.setOnClickListener(new ImageView.OnClickListener() {
@@ -107,7 +114,7 @@ public class ScheduleDetailsFragment extends Fragment {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == PICK_IMAGE && resultCode == Activity.RESULT_OK) {
             if (data == null) {
-                Toast.makeText(getContext(), "ya done fucked up A-A-ron (data is null)", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "data is null", Toast.LENGTH_SHORT).show();
             } else {
                 // TODO: what happens if you move the image's location?
                 Uri selectedImage = data.getData();
@@ -134,11 +141,21 @@ public class ScheduleDetailsFragment extends Fragment {
         mListener = null;
     }
 
-    public void getAndSetScheduleDetails(View root) {
-        changingTime = getArguments().getString(ARG_CHANGING_TIME);
-        wallpaperImage = Uri.parse(getArguments().getString(ARG_WALLPAPER));
-        setTime(changingTime);
-        loadImage(wallpaperImage);
+    // Seems to never get called for some reason
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSIONS_CODE: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    doChooseImage();
+                } else {
+                    Toast.makeText(getContext(), "Permission denied to choose image :(", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
     }
 
     public void returnToScheduleList() {
@@ -164,15 +181,36 @@ public class ScheduleDetailsFragment extends Fragment {
     }
 
     public void pickTime() {
-        DialogFragment fragment = new TimePickerFragment();
+        DialogFragment fragment = TimePickerFragment.newInstance(changingTime);
         fragment.show(getActivity().getSupportFragmentManager(), "timePicker");
     }
 
-    public void chooseImage() {
-        Intent intent = new Intent();
+    //android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+    public void doChooseImage() {
+        Intent intent;
+        // Can choose from documents and Google Drive
+        if (Build.VERSION.SDK_INT >= 19)
+            intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        // Can only choose from Gallery app
+        else
+            intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         intent.setType("image/*");
-        intent.setAction(Intent.ACTION_GET_CONTENT);
-        startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE);
+        startActivityForResult(intent, PICK_IMAGE);
+    }
+
+    public void chooseImage() {
+        if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            // Determine if we need an explanation. This happens if the user has previously denied the request.
+            if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                Toast.makeText(getContext(), "I need your permission yo", Toast.LENGTH_SHORT).show();
+            } else {
+                // No explanation needed, we can request the permission.
+                requestPermissions(new String[] {Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_CODE);
+            }
+        } else { // Permission already granted
+            doChooseImage();
+        }
     }
 
     public void setTime(String time) {
@@ -190,16 +228,7 @@ public class ScheduleDetailsFragment extends Fragment {
             Picasso.with(getContext())
                     .load(imageUri)
                     .error(R.drawable.error)
-                    .resize(500,500)
-                    .into(wallpaperImageView);
-    }
-
-    public void loadImage(int imageId) {
-        if (wallpaperImageView != null)
-            Picasso.with(getContext())
-                    .load(imageId)
-                    .error(R.drawable.error)
-                    .resize(500,500)
+                    .resize(750,1000)
                     .into(wallpaperImageView);
     }
 

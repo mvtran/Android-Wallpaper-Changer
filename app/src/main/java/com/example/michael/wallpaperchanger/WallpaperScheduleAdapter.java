@@ -1,5 +1,6 @@
 package com.example.michael.wallpaperchanger;
 
+import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -62,7 +63,16 @@ public class WallpaperScheduleAdapter extends RecyclerView.Adapter<WallpaperSche
         // Get data from items[pos], then replace contents of the View with that ItemData
         public void bind(final ItemData item, final OnItemClickListener listener) {
             text.setText(item.getText());
-            Picasso.with(itemView.getContext())
+            Picasso.Builder builder = new Picasso.Builder(itemView.getContext());
+            builder.listener(new Picasso.Listener()
+            {
+                @Override
+                public void onImageLoadFailed(Picasso picasso, Uri uri, Exception exception)
+                {
+                    exception.printStackTrace();
+                }
+            });
+            builder.build()
                     .load(item.getImageUri())
                     .error(R.drawable.error)
                     .resize(50,50)

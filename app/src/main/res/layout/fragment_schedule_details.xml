@@ -59,19 +59,19 @@
         android:text="@string/ok"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="32dp"
-        android:layout_marginRight="86dp"
-        android:layout_marginEnd="86dp"
-        android:layout_gravity="center_horizontal|bottom|end" />
+        android:layout_marginBottom="16dp"
+        android:layout_marginLeft="50dp"
+        android:layout_marginStart="50dp"
+        android:layout_gravity="center_horizontal|bottom" />
 
     <Button
         android:id="@+id/crop_button"
         android:text="@string/crop"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="32dp"
-        android:layout_marginLeft="86dp"
-        android:layout_marginStart="86dp"
-        android:layout_gravity="center_horizontal|start|bottom" />
+        android:layout_marginBottom="16dp"
+        android:layout_marginRight="50dp"
+        android:layout_marginEnd="50dp"
+        android:layout_gravity="center_horizontal|bottom" />
 
 </FrameLayout>

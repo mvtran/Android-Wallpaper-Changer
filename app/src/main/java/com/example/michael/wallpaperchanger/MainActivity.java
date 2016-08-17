@@ -22,7 +22,8 @@ import android.widget.Toast;
 import java.util.Iterator;
 import java.util.Map;
 
-// TODO: create preference to show 24 hour time or am/pm time. after all, the Utility class is made for both.
+// TODO: create preference to show 24 hour time or am/pm time.
+// TODO: handle landscape mode (or force portrait?)
 
 public class MainActivity extends AppCompatActivity implements ScheduleRecyclerViewFragment.OnFragmentInteractionListener,
                                                                 ScheduleDetailsFragment.OnFragmentInteractionListener {
@@ -100,7 +101,7 @@ public class MainActivity extends AppCompatActivity implements ScheduleRecyclerV
                 @Override
                 public void onClick(View view) {
                     Uri placeholderImageUri = Utility.idToUri("R.drawable.placeholder_wallpaper_full");
-                    openScheduleDetails(Utility.get12HourTime(), placeholderImageUri);
+                    openScheduleDetails(Utility.getCurrentTime(false), placeholderImageUri);
                 }
             });
     }
@@ -114,6 +115,7 @@ public class MainActivity extends AppCompatActivity implements ScheduleRecyclerV
         Toast.makeText(this, "Schedules cleared", Toast.LENGTH_SHORT).show();
     }
 
+    // TODO: implement editing mode so you can edit an existing schedule
     public void onScheduleClicked(String time, Uri imageUri) {
         openScheduleDetails(time, imageUri);
     }

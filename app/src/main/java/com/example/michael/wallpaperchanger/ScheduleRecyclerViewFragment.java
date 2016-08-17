@@ -26,11 +26,8 @@ import java.util.Map;
 
 public class ScheduleRecyclerViewFragment extends Fragment {
 
-    private static final String TAG = "From Fragment";
+    private static final String TAG = "RecyclerView";
 
-    private RecyclerView                    recyclerView;
-    private RecyclerView.Adapter            adapter;
-    private RecyclerView.LayoutManager      layoutManager;
     private OnFragmentInteractionListener   mListener;
     public  FloatingActionButton            fab;
 
@@ -69,10 +66,10 @@ public class ScheduleRecyclerViewFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_schedule_recycler_view, container, false);
         loadFab();
 
-        recyclerView = (RecyclerView) rootView.findViewById(R.id.schedules_recycler_view);
+        RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.schedules_recycler_view);
         recyclerView.setHasFixedSize(true); // Set this to improve performance
 
-        layoutManager = new LinearLayoutManager(getActivity());
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getActivity());
         recyclerView.setLayoutManager(layoutManager);
 
         ArrayList<ItemData> scheduleList = new ArrayList<>();
@@ -85,8 +82,9 @@ public class ScheduleRecyclerViewFragment extends Fragment {
                 ((MainActivity)getActivity()).onScheduleClicked(item.getText(), item.getImageUri());
             }
         };
-        adapter = new WallpaperScheduleAdapter(scheduleList, listener);
+        RecyclerView.Adapter adapter = new WallpaperScheduleAdapter(scheduleList, listener);
         recyclerView.setAdapter(adapter);
+
         return rootView;
     }
 
@@ -124,7 +122,7 @@ public class ScheduleRecyclerViewFragment extends Fragment {
             String[] key = ((String)pair.getKey()).split("-");
             String time = key[1];
             Uri image = Uri.parse((String)pair.getValue());
-
+            Log.d(TAG, "(" + time + ", " + image.toString() + ")");
             items.add(new ItemData(time, image));
             it.remove();
         }
