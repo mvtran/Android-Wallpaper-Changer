@@ -168,7 +168,7 @@ public class ScheduleDetailsFragment extends Fragment {
         SharedPreferences.Editor editor = prefs.edit();
 
         // TODO: check for duplicates while ignoring 12hour/24hour format
-        String key = "schedule-"+changingTime;
+        String key = Utility.timeAsPrefKey(changingTime);
         if (prefs.contains(key)) {
             Toast.makeText(getContext(), "Schedule for " + changingTime + " already exists", Toast.LENGTH_SHORT).show();
         } else {

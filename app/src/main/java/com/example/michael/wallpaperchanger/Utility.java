@@ -12,6 +12,15 @@ import java.util.Locale;
 public final class Utility {
     private Utility() {}
 
+    /*
+    This is what is used to store the keys for each schedule. They are distinguished
+    simply by their time in the format "schedule-[time]". Since no two schedules
+    can have the same time, this guarantees all keys are unique.
+     */
+    public static String timeAsPrefKey(String time) {
+        return "schedule-"+time;
+    }
+
     public static String getCurrentTime(boolean in24HourFormat) {
         if (in24HourFormat) {
             return new SimpleDateFormat("HH:mm", Locale.US).format(new Date());
