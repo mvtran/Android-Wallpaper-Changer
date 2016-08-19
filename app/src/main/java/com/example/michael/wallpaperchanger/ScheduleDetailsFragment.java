@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
+import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,6 +28,7 @@ public class ScheduleDetailsFragment extends Fragment {
     // the fragment initialization parameters
     static final String ARG_CHANGING_TIME = "com.example.michael.wallpaperchanger.changingTime";
     static final String ARG_WALLPAPER = "com.example.michael.wallpaperchanger.currentWallpaper";
+    static final String ARG_IS_EDITING = "com.example.michael.wallpaperchanger.isEditing";
 
     // request codes
     static final int PICK_IMAGE = 1;
@@ -39,17 +41,20 @@ public class ScheduleDetailsFragment extends Fragment {
     private String changingTime;
     private Uri wallpaperImage;
 
-    private OnFragmentInteractionListener mListener;
+    // True if the schedule displayed already exists so that we can change just the image or time.
+    private boolean isEditing = false;
+    private String originalPrefKey;
 
     public ScheduleDetailsFragment() {
         // Required empty public constructor
     }
 
-    public static ScheduleDetailsFragment newInstance(String time, String imageUriString) {
+    public static ScheduleDetailsFragment newInstance(String time, String imageUriString, boolean isEditing) {
         ScheduleDetailsFragment fragment = new ScheduleDetailsFragment();
         Bundle args = new Bundle();
         args.putString(ARG_CHANGING_TIME, time);
         args.putString(ARG_WALLPAPER, imageUriString);
+        args.putBoolean(ARG_IS_EDITING, isEditing);
         fragment.setArguments(args);
         return fragment;
     }
@@ -59,7 +64,9 @@ public class ScheduleDetailsFragment extends Fragment {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             changingTime = getArguments().getString(ARG_CHANGING_TIME);
+            originalPrefKey = Utility.timeAsPrefKey(changingTime); // saved just in case we change the time. we need an original reference.
             wallpaperImage = Uri.parse(getArguments().getString(ARG_WALLPAPER));
+            isEditing = getArguments().getBoolean(ARG_IS_EDITING);
         } else {
             returnToScheduleList();
             Toast.makeText(getContext(), "Something went wrong", Toast.LENGTH_SHORT).show();
@@ -125,24 +132,6 @@ public class ScheduleDetailsFragment extends Fragment {
     }
 
     @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        if (context instanceof OnFragmentInteractionListener) {
-            mListener = (OnFragmentInteractionListener) context;
-        } else {
-            throw new RuntimeException(context.toString()
-                    + " must implement OnFragmentInteractionListener");
-        }
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mListener = null;
-    }
-
-    // Seems to never get called for some reason
-    @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
         switch (requestCode) {
@@ -166,18 +155,22 @@ public class ScheduleDetailsFragment extends Fragment {
     public void confirmSettings() {
         SharedPreferences prefs = getActivity().getSharedPreferences(MainActivity.ALARM_PREFS, 0);
         SharedPreferences.Editor editor = prefs.edit();
-
-        // TODO: check for duplicates while ignoring 12hour/24hour format
         String key = Utility.timeAsPrefKey(changingTime);
-        if (prefs.contains(key)) {
+
+        if (isEditing) {
+            if (!key.equalsIgnoreCase(originalPrefKey)) {
+                editor.remove(originalPrefKey);
+                // TODO: remove alarm too
+            }
+        } else if (prefs.contains(key)) {
             Toast.makeText(getContext(), "Schedule for " + changingTime + " already exists", Toast.LENGTH_SHORT).show();
-        } else {
-            String imageUriString = wallpaperImage.toString();
-            editor.putString(key, imageUriString);
-            editor.apply();
-            returnToScheduleList();
-            Toast.makeText(getContext(), "Saved schedule for " + changingTime, Toast.LENGTH_SHORT).show();
+            return;
         }
+        String imageUriString = wallpaperImage.toString();
+        editor.putString(key, imageUriString);
+        editor.apply();
+        returnToScheduleList();
+        Toast.makeText(getContext(), "Saved schedule for " + changingTime, Toast.LENGTH_SHORT).show();
     }
 
     public void pickTime() {
@@ -185,7 +178,6 @@ public class ScheduleDetailsFragment extends Fragment {
         fragment.show(getActivity().getSupportFragmentManager(), "timePicker");
     }
 
-    //android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI
     public void doChooseImage() {
         Intent intent;
         // Can choose from documents and Google Drive
@@ -224,21 +216,22 @@ public class ScheduleDetailsFragment extends Fragment {
     }
 
     public void loadImage(Uri imageUri) {
+        int[] dimen = getPreviewSize();
         if (wallpaperImageView != null)
             Picasso.with(getContext())
                     .load(imageUri)
                     .error(R.drawable.error)
-                    .resize(750,1000)
+                    .resize(dimen[0], dimen[1])
+                    .onlyScaleDown()
                     .into(wallpaperImageView);
     }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     */
-    public interface OnFragmentInteractionListener {
-        void onFragmentClicked();
+    private int[] getPreviewSize() {
+        int[] dimensions = new int[2];
+        DisplayMetrics dm = new DisplayMetrics();
+        getActivity().getWindowManager().getDefaultDisplay().getMetrics(dm);
+        dimensions[0] = (int)(dm.widthPixels * 0.50);
+        dimensions[1] = (int)(dm.heightPixels * 0.42);
+        return dimensions;
     }
 }

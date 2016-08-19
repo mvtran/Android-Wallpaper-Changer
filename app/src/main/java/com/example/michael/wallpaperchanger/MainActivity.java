@@ -25,8 +25,7 @@ import java.util.Map;
 // TODO: create preference to show 24 hour time or am/pm time.
 // TODO: handle landscape mode (or force portrait?)
 
-public class MainActivity extends AppCompatActivity implements ScheduleRecyclerViewFragment.OnFragmentInteractionListener,
-                                                                ScheduleDetailsFragment.OnFragmentInteractionListener {
+public class MainActivity extends AppCompatActivity implements ScheduleRecyclerViewFragment.OnFragmentInteractionListener {
 
     private static final String TAG = "MainActivity";
     public static final String ALARM_PREFS = "com.example.michael.wallpaperchanger.alarmPrefs";
@@ -101,7 +100,7 @@ public class MainActivity extends AppCompatActivity implements ScheduleRecyclerV
                 @Override
                 public void onClick(View view) {
                     Uri placeholderImageUri = Utility.idToUri("R.drawable.placeholder_wallpaper_full");
-                    openScheduleDetails(Utility.getCurrentTime(false), placeholderImageUri);
+                    openScheduleDetails(Utility.getCurrentTime(false), placeholderImageUri, false);
                 }
             });
     }
@@ -115,17 +114,13 @@ public class MainActivity extends AppCompatActivity implements ScheduleRecyclerV
         Toast.makeText(this, "Schedules cleared", Toast.LENGTH_SHORT).show();
     }
 
-    // TODO: implement editing mode so you can edit an existing schedule
+    // Called when clicking on an existing schedule
     public void onScheduleClicked(String time, Uri imageUri) {
-        openScheduleDetails(time, imageUri);
+        openScheduleDetails(time, imageUri, true);
     }
 
-    public void onFragmentClicked() {
-        Toast.makeText(this, "onFragmentClicked()", Toast.LENGTH_SHORT).show();
-    }
-
-    public void openScheduleDetails(String time, Uri imageUri) {
-        ScheduleDetailsFragment fragment = ScheduleDetailsFragment.newInstance(time, imageUri.toString());
+    public void openScheduleDetails(String time, Uri imageUri, boolean isEditing) {
+        ScheduleDetailsFragment fragment = ScheduleDetailsFragment.newInstance(time, imageUri.toString(), isEditing);
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.main_container, fragment)
