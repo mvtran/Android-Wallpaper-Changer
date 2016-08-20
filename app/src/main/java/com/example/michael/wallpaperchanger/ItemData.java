@@ -30,6 +30,16 @@ public class ItemData {
         this.prefKey = Utility.timeAsPrefKey(text);
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof ItemData) {
+            ItemData other = (ItemData)obj;
+            if ((this.prefKey).equals(other.getPrefKey()))
+                return true;
+        }
+        return false;
+    }
+
     public String getText() {
         return text;
     }

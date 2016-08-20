@@ -231,7 +231,7 @@ public class ScheduleDetailsFragment extends Fragment {
         DisplayMetrics dm = new DisplayMetrics();
         getActivity().getWindowManager().getDefaultDisplay().getMetrics(dm);
         dimensions[0] = (int)(dm.widthPixels * 0.50);
-        dimensions[1] = (int)(dm.heightPixels * 0.42);
+        dimensions[1] = (int)(dm.heightPixels * 0.35);
         return dimensions;
     }
 }

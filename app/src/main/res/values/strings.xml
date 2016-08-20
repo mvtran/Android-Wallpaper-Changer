@@ -4,6 +4,9 @@
 
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
+    <string name="button_undo">Undo</string>
+
+    <string name="menu_checkbox_undo">Turn on Undo</string>
 
     <!--Placeholders-->
     <string name="placeholder">Here is some placeholder text. Hello! Goodbye!</string>

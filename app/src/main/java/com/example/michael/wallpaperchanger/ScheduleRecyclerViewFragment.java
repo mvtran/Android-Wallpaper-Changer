@@ -6,12 +6,19 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,10 +33,14 @@ import java.util.Map;
 
 public class ScheduleRecyclerViewFragment extends Fragment {
 
-    private static final String TAG = "RecyclerView";
+    RecyclerView recyclerView;
+    RecyclerView.Adapter adapter;
+    ItemTouchHelper itemTouchHelper;
 
-    private OnFragmentInteractionListener   mListener;
-    public  FloatingActionButton            fab;
+    private static final String TAG = "blah";
+
+    private OnFragmentInteractionListener mListener;
+    public  FloatingActionButton fab;
 
     public ScheduleRecyclerViewFragment() {
         // Required empty public constructor
@@ -66,7 +77,7 @@ public class ScheduleRecyclerViewFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_schedule_recycler_view, container, false);
         loadFab();
 
-        RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.schedules_recycler_view);
+        recyclerView = (RecyclerView) rootView.findViewById(R.id.schedules_recycler_view);
         recyclerView.setHasFixedSize(true); // Set this to improve performance
 
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getActivity());
@@ -82,8 +93,11 @@ public class ScheduleRecyclerViewFragment extends Fragment {
                 ((MainActivity)getActivity()).onScheduleClicked(item.getText(), item.getImageUri());
             }
         };
-        RecyclerView.Adapter adapter = new WallpaperScheduleAdapter(scheduleList, listener);
+        adapter = new WallpaperScheduleAdapter(scheduleList, listener);
         recyclerView.setAdapter(adapter);
+
+        setupItemTouchHelper();
+        setUpAnimationDecoratorHelper();
 
         return rootView;
     }
@@ -137,17 +151,148 @@ public class ScheduleRecyclerViewFragment extends Fragment {
         clear.setVisibility(View.VISIBLE);
     }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
     public interface OnFragmentInteractionListener {
         void onScheduleClicked(String time, Uri imageUri);
+    }
+
+    private void setupItemTouchHelper() {
+        ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+            Drawable background;
+            Drawable xMark;
+            int xMarkMargin;
+            boolean initiated;
+
+            private void init() {
+                background = new ColorDrawable(Color.RED);
+                xMark = ContextCompat.getDrawable(getContext(), R.drawable.castform);
+                xMark.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
+                xMarkMargin = (int)getContext().getResources().getDimension(R.dimen.clear_margin);
+                initiated = true;
+            }
+
+            @Override
+            public boolean onMove(RecyclerView rv, RecyclerView.ViewHolder vh, RecyclerView.ViewHolder target) {
+                Log.d(TAG, "onMove()");
+                return false;
+            }
+
+            @Override
+            public int getSwipeDirs(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder) {
+                int position = viewHolder.getAdapterPosition();
+                WallpaperScheduleAdapter adapter = (WallpaperScheduleAdapter)recyclerView.getAdapter();
+                if (adapter.isUndoOn() && adapter.isPendingRemoval(position))
+                    return 0;
+                return super.getSwipeDirs(recyclerView, viewHolder);
+            }
+
+            @Override
+            public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
+                int swipedPosition = viewHolder.getAdapterPosition();
+                WallpaperScheduleAdapter theAdapter = (WallpaperScheduleAdapter)adapter;
+                boolean undoOn = theAdapter.isUndoOn();
+                if (undoOn)
+                    theAdapter.pendingRemoval(swipedPosition);
+                else
+                    theAdapter.remove(swipedPosition);
+            }
+
+            @Override
+            public void onChildDraw(Canvas c, RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder,
+                                    float dX, float dY, int actionState, boolean isCurrentlyActive) {
+                View itemView = viewHolder.itemView;
+
+                // unknown why, gets called for viewholder that are already swiped away
+                if (viewHolder.getAdapterPosition() == -1)
+                    return;
+                if (!initiated)
+                    init();
+
+                // Draw red background
+                background.setBounds(itemView.getRight() + (int)dX, itemView.getTop(), itemView.getRight(), itemView.getBottom());
+                background.draw(c);
+
+                // Draw X mark
+                int itemHeight = itemView.getBottom() - itemView.getTop();
+                int intrinsicWidth = xMark.getIntrinsicWidth();
+                int intrinsicHeight = xMark.getIntrinsicWidth(); // TODO: typo or not?
+
+                int xMarkLeft = itemView.getRight() - xMarkMargin - intrinsicWidth;
+                int xMarkRight = itemView.getRight() - xMarkMargin;
+                int xMarkTop = itemView.getTop() + (itemHeight - intrinsicHeight)/2;
+                int xMarkBottom = xMarkTop + intrinsicHeight;
+                xMark.setBounds(xMarkLeft, xMarkTop, xMarkRight, xMarkBottom);
+
+                xMark.draw(c);
+
+                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+            }
+        };
+        itemTouchHelper = new ItemTouchHelper(simpleItemTouchCallback);
+        itemTouchHelper.attachToRecyclerView(recyclerView);
+    }
+
+    /* Setup ItemDecorator to draw red background in empty space while items
+        are animating to their new positions after an item is removed.
+     */
+    private void setUpAnimationDecoratorHelper() {
+        recyclerView.addItemDecoration(new RecyclerView.ItemDecoration() {
+
+            Drawable background;
+            boolean initiated;
+
+            private void init() {
+                background = new ColorDrawable(Color.RED);
+                initiated = true;
+            }
+
+            @Override
+            public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state) {
+                if (!initiated)
+                    init();
+
+                // Only if animation is in progress
+                if (parent.getItemAnimator().isRunning()) {
+                    View lastViewComingDown = null;
+                    View firstViewComingUp = null;
+
+                    int left = 0;
+                    int right = parent.getWidth();
+
+                    int top = 0;
+                    int bottom = 0;
+
+                    int childCount = parent.getLayoutManager().getChildCount();
+                    for (int i = 0; i < childCount; i++) {
+                        View child = parent.getLayoutManager().getChildAt(i);
+                        if (child.getTranslationY() < 0) {
+                            // view is coming down
+                            lastViewComingDown = child;
+                        } else if (child.getTranslationY() > 0) {
+                            // view is coming up
+                            if (firstViewComingUp == null)
+                                firstViewComingUp = child;
+                        }
+                    }
+
+                    if (lastViewComingDown != null && firstViewComingUp != null) {
+                        // views are coming down AND going up to fill the void
+                        top = lastViewComingDown.getBottom() + (int) lastViewComingDown.getTranslationY();
+                        bottom = firstViewComingUp.getTop() + (int) firstViewComingUp.getTranslationY();
+                    } else if (lastViewComingDown != null) {
+                        // views are going down to fill the void
+                        top = lastViewComingDown.getBottom() + (int) lastViewComingDown.getTranslationY();
+                        bottom = lastViewComingDown.getBottom();
+                    } else if (firstViewComingUp != null) {
+                        // views are coming up to fill the void
+                        top = firstViewComingUp.getTop();
+                        bottom = firstViewComingUp.getTop() + (int) firstViewComingUp.getTranslationY();
+                    }
+
+                    background.setBounds(left, top, right, bottom);
+                    background.draw(c);
+                }
+                super.onDraw(c, parent, state);
+            }
+        });
     }
 }
